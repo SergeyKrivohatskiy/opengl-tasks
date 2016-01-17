@@ -8,11 +8,20 @@
 #include <glm/glm.hpp>
 #include <AntTweakBar.h>
 #include "../common/shader.hpp"
+#include "../common/utils.h"
 
 using namespace glm;
 
 int main() 
 {
+	GLFWwindow *window = init();
+	if (!window)
+	{
+		return -1;
+	}
 
+
+
+	glfwTerminate();
 	return 0;
 }

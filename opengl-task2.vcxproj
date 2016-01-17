@@ -12,10 +12,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\shader.cpp" />
+    <ClCompile Include="src\common\utils.cpp" />
     <ClCompile Include="src\task2\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\shader.hpp" />
+    <ClInclude Include="src\common\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C8B285FB-2128-4B25-81BD-05774A6CB0D6}</ProjectGuid>
