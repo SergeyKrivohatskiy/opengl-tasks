@@ -11,7 +11,8 @@
 
 using namespace glm;
 
-int main(void)
+int main() 
 {
+
 	return 0;
 }

@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include <AntTweakBar.h>
 #include "../common/shader.hpp"
+#include "../common/utils.h"
 
 using namespace glm;
 
@@ -34,33 +35,7 @@ void mouse_callback(GLFWwindow *window, double, double y_offset)
 
 int main(void)
 {
-	if (!glfwInit())
-	{
-		fprintf(stderr, "Failed to initialize GLFW\n");
-		return -1;
-	}
-
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	GLFWwindow* window = glfwCreateWindow(1300, 800, "Fractal", NULL, NULL);
-
-	if (window == NULL)
-	{
-		fprintf(stderr, "Failed to open GLFW window\n");
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK)
-	{
-		fprintf(stderr, "Failed to initialize GLEW\n");
-		return -1;
-	}
+	GLFWwindow *window = init();
 
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);

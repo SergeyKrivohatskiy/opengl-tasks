@@ -100,10 +100,12 @@ xcopy /y /d "$(SolutionDir)shaders\*" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\common\shader.cpp" />
+    <ClCompile Include="src\common\utils.cpp" />
     <ClCompile Include="src\task1\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\shader.hpp" />
+    <ClInclude Include="src\common\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
