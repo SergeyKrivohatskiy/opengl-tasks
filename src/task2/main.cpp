@@ -80,9 +80,6 @@ GLuint load_cubemap(std::string const &name_prefix)
 	glGenTextures(1, &texture_id);
 	glActiveTexture(GL_TEXTURE0);
 
-	int width, height;
-	unsigned char* image;
-
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
 	gli::texture texture_p_x = gli::load(name_prefix + "+x.dds");
 	assert(!texture_p_x.empty());
@@ -169,7 +166,7 @@ int main()
 	float t = 0;
 	while (!glfwWindowShouldClose(window))
 	{
-		t += 3e-3;
+		t += 3e-3f;
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glfwPollEvents();
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
