@@ -1,0 +1,13 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertex_position_window_space;
+
+uniform mat4 view_proj_mat;
+uniform mat4 view_proj_mat_projector_inv;
+
+
+void main()
+{
+    gl_Position = view_proj_mat * view_proj_mat_projector_inv * vec4(vertex_position_window_space, 1.0);
+}
+

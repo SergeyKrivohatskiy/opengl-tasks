@@ -20,99 +20,36 @@
 #include "../common/shader.hpp"
 #include "../common/utils.h"
 
-static GLfloat const skybox_v[] = {
-	-1.0f, 1.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, 1.0f, -1.0f,
-	-1.0f, 1.0f, -1.0f,
-
-	-1.0f, -1.0f, 1.0f,
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, 1.0f, -1.0f,
-	-1.0f, 1.0f, -1.0f,
-	-1.0f, 1.0f, 1.0f,
-	-1.0f, -1.0f, 1.0f,
-
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-
-	-1.0f, -1.0f, 1.0f,
-	-1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, -1.0f, 1.0f,
-	-1.0f, -1.0f, 1.0f,
-
-	-1.0f, 1.0f, -1.0f,
-	1.0f, 1.0f, -1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f, -1.0f,
-
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f, 1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f, 1.0f,
-	1.0f, -1.0f, 1.0f
-};
-
 using namespace glm;
 
-void load_texture(GLint idx, gli::texture const &texture)
+GLint FILTER = GL_LINEAR_MIPMAP_LINEAR;
+bool DYNAMIC = false;
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-	glTexImage2D(idx, 0, GL_RGB,
-		texture.dimensions().x,
-		texture.dimensions().y,
-		0, GL_RGB, GL_UNSIGNED_BYTE, texture.data(0, 0, 0));
+	if (action != GLFW_PRESS)
+	{
+		return;
+	}
+	switch (key)
+	{
+	case GLFW_KEY_ESCAPE:
+		glfwSetWindowShouldClose(window, GL_TRUE);
+		return;
+	case GLFW_KEY_1:
+		FILTER = GL_NEAREST;
+		return;
+	case GLFW_KEY_2:
+		FILTER = GL_LINEAR;
+		return;
+	case GLFW_KEY_3:
+		FILTER = GL_LINEAR_MIPMAP_LINEAR;
+		return;
+	case GLFW_KEY_4:
+		DYNAMIC = !DYNAMIC;
+		return;
+	}
 }
-
-GLuint load_cubemap(std::string const &name_prefix)
-{
-	GLuint texture_id;
-	glGenTextures(1, &texture_id);
-	glActiveTexture(GL_TEXTURE0);
-
-	int width, height;
-	unsigned char* image;
-
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
-	gli::texture texture_p_x = gli::load(name_prefix + "+x.dds");
-	assert(!texture_p_x.empty());
-	gli::texture texture_p_y = gli::load(name_prefix + "+y.dds");
-	assert(!texture_p_y.empty());
-	gli::texture texture_p_z = gli::load(name_prefix + "+z.dds");
-	assert(!texture_p_z.empty());
-	gli::texture texture_m_x = gli::load(name_prefix + "-x.dds");
-	assert(!texture_m_x.empty());
-	gli::texture texture_m_y = gli::load(name_prefix + "-y.dds");
-	assert(!texture_m_y.empty());
-	gli::texture texture_m_z = gli::load(name_prefix + "-z.dds");
-	assert(!texture_m_z.empty());
-	load_texture(GL_TEXTURE_CUBE_MAP_POSITIVE_X, texture_p_x);
-	load_texture(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, texture_p_y);
-	load_texture(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, texture_p_z);
-	load_texture(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, texture_m_x);
-	load_texture(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, texture_m_y);
-	load_texture(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, texture_m_z);
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
-	return texture_id;
-}
-
 
 int main() 
 {
@@ -121,28 +58,34 @@ int main()
 	{
 		return -1;
 	}
+	glfwSetKeyCallback(window, key_callback);
 
-	GLuint skybox_shader = LoadShaders("task2_skybox.vertexshader", "task2_skybox.fragmentshader");
-	GLuint scene_shader = LoadShaders("task2_scene.vertexshader", "task2_scene.fragmentshader");
+	GLuint projector_shader = 
+		LoadShaders("task3_projector.vertexshader", "task3_projector.fragmentshader");
+	GLuint scene_shader =
+		LoadShaders("task3_scene.vertexshader", "task3_scene.fragmentshader");
+	GLuint camera_shader =
+		LoadShaders("task3_camera.vertexshader", "task3_camera.fragmentshader");
 
-	GLuint skybox_vao, skybox_vbo;
-	glGenVertexArrays(1, &skybox_vao);
-	glGenBuffers(1, &skybox_vbo);
-	glBindVertexArray(skybox_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, skybox_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skybox_v), &skybox_v, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-	glBindVertexArray(0);
 
-	GLuint skybox_texture = load_cubemap("SantaMariaDeiMiracoli");
-	if (!skybox_texture)
-	{
-		return -5;
-	}
+	gli::texture texture_smile = gli::load("smile.dds");
+	GLuint smile_tex;
+	glGenTextures(1, &smile_tex);
+	// Assign texture to ID
+	glBindTexture(GL_TEXTURE_2D, smile_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_smile.dimensions().x,
+		texture_smile.dimensions().y,
+		0, GL_RGB, GL_UNSIGNED_BYTE, texture_smile.data(0, 0, 0));
 
-	std::pair<std::vector<GLfloat>, std::vector<GLfloat>> vert_and_normals = 
-			load_scene("spider.obj");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	std::pair<std::vector<GLfloat>, std::vector<GLfloat>> vert_and_normals =
+		load_scene("spider.obj");
 
 	std::vector<GLfloat> &vertexes = vert_and_normals.first;
 	std::vector<GLfloat> &normals = vert_and_normals.second;
@@ -162,37 +105,141 @@ int main()
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, norm_buffer);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-	glBindVertexArray(0);
+	glBindVertexArray(0); 
+	
+	GLuint projector_buffer;
+	glGenFramebuffers(1, &projector_buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, projector_buffer);
+	GLuint projector_texture;
+	glGenTextures(1, &projector_texture);
+	glBindTexture(GL_TEXTURE_2D, projector_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1300, 800, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	GLuint projector_depth;
+	glGenRenderbuffers(1, &projector_depth);
+	glBindRenderbuffer(GL_RENDERBUFFER, projector_depth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1300, 800);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, projector_depth);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, projector_texture, 0);
+
+	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	vec3 near_tr(1, 1, 0.1f);
+	vec3 near_tl(1, -1, 0.1f);
+	vec3 near_br(-1, 1, 0.1f);
+	vec3 near_bl(-1, -1, 0.1f);
+	vec3 far_tr(1, 1, 5);
+	vec3 far_tl(1, -1, 5);
+	vec3 far_br(-1, 1, 5);
+	vec3 far_bl(-1, -1, 5);
+
+	vec3 camera_lines[24] = {
+		// near rect
+		near_tr, near_tl,
+		near_tr, near_br,
+		near_tl, near_bl,
+		near_br, near_bl,
+
+		// far rect
+		far_tr, far_tl,
+		far_tr, far_br,
+		far_tl, far_bl,
+		far_br, far_bl,
+
+		//near to far
+		near_tr, far_tr,
+		near_tl, far_tl,
+		near_br, far_br,
+		near_bl, far_bl
+	};
+
+	GLuint cam_vao, cam_vbo;
+
+	glGenVertexArrays(1, &cam_vao);
+	glGenBuffers(1, &cam_vbo);
+
+	glBindVertexArray(cam_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, cam_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(camera_lines), &camera_lines, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+	glEnableVertexAttribArray(0);
 
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	float t = 0;
+	mat4 proj_cam = perspective(45.0f,
+		float(1300) / float(800), 0.1f, 5.0f);
+	mat4 proj_projector = glm::perspective(6.0f,
+		float(1300) / float(800), 0.1f, 5.0f);
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	while (!glfwWindowShouldClose(window))
 	{
-		t += 3e-3;
+		double t = glfwGetTime();
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glfwPollEvents();
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		mat4 proj = glm::perspective(45.0f,
-			float(1300) / float(800), 0.1f, 100.0f);
-		mat4 view(lookAt(vec3(sin(t), sin(t * 0.912), cos(t)) * 0.6f, vec3(0, 0, 0), vec3(0, 1, 0)));
+		mat4 view_cam(lookAt(vec3(sin(t), sin(t * 0.912) / 3 + 0.6, cos(t)) * 0.6f, 
+				vec3(0, 0, 0), vec3(0, 1, 0)));
+		mat4 view_projector(lookAt(vec3(0, 1, 0) * 0.6f,
+			vec3(0, 0, 0), vec3(sin(t / 8.2), 0, cos(t / 8.2))));
+		vec3 to_projector(0, 1, 0);
+		mat4 view_proj_cam = proj_cam * view_cam;
+		mat4 view_proj_projector = proj_projector * view_projector;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, projector_buffer);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glUseProgram(projector_shader);
+		glUniform1i(glGetUniformLocation(projector_shader, "output_buffer"), 0);
+		glUniformMatrix4fv(glGetUniformLocation(projector_shader, "view_proj_mat"),
+			1, GL_FALSE, value_ptr(view_proj_cam));
+		glBindVertexArray(vertex_array_o);
+		glDrawArrays(GL_TRIANGLES, 0, vertexes.size() / 3);
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(scene_shader);
 		glUniformMatrix4fv(glGetUniformLocation(scene_shader, "view_proj_mat"),
-			1, GL_FALSE, value_ptr(proj * view));
+			1, GL_FALSE, value_ptr(view_proj_cam));
+		glUniformMatrix4fv(glGetUniformLocation(scene_shader, "view_proj_mat_projector"),
+			1, GL_FALSE, value_ptr(view_proj_projector));
+		glUniform3f(glGetUniformLocation(scene_shader, "to_projector"),
+			to_projector.x, to_projector.y, to_projector.z);
 		glBindVertexArray(vertex_array_o);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
-
+		GLint tex_loc = glGetUniformLocation(scene_shader, "projector_texture");
+		glUniform1i(tex_loc, 3);
+		glActiveTexture(GL_TEXTURE3);
+		if (DYNAMIC)
+		{
+			glBindTexture(GL_TEXTURE_2D, projector_texture);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FILTER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FILTER);
+		} else {
+			glBindTexture(GL_TEXTURE_2D, smile_tex);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, FILTER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, FILTER);
+		}
 		glDrawArrays(GL_TRIANGLES, 0, vertexes.size() / 3);
-
-		glUseProgram(skybox_shader);
-		glUniformMatrix4fv(glGetUniformLocation(skybox_shader, "view_proj_mat"),
-			1, GL_FALSE, value_ptr(proj * view));
-		glBindVertexArray(skybox_vao);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
+		glActiveTexture(GL_TEXTURE0);
+
+
+		glUseProgram(camera_shader);
+
+		glUniformMatrix4fv(glGetUniformLocation(camera_shader, "view_proj_mat"), 
+				1, GL_FALSE, value_ptr(view_proj_cam));
+		glUniformMatrix4fv(glGetUniformLocation(camera_shader, "view_proj_mat_projector_inv"), 
+				1, GL_FALSE, value_ptr(inverse(view_proj_projector)));
+		glBindVertexArray(cam_vao);
+		glDrawArrays(GL_LINES, 0, 24);
 
 		glfwSwapBuffers(window);
 	}

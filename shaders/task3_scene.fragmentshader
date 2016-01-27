@@ -1,0 +1,23 @@
+#version 330 core
+
+in vec3 normal;
+in vec4 position_projector;
+
+out vec4 color;
+
+uniform sampler2D projector_texture;
+uniform vec3 to_projector;
+
+void main()
+{
+    vec2 projector_uv = (position_projector.xy / position_projector.w) / 2.0 + 0.5;
+    vec3 projector_color = texture(projector_texture, vec2(projector_uv.x, 1.0 - projector_uv.y)).bgr;
+    float coef;
+    if (dot(to_projector, normal / length(normal)) <= 0)
+    {
+       coef = 0.0; 
+    } else {
+       coef = pow(dot(to_projector, normal / length(normal)), 5);
+    }
+    color = vec4(projector_color * coef + vec3(0.5), 1.0);
+}

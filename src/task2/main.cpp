@@ -163,10 +163,9 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-	float t = 0;
 	while (!glfwWindowShouldClose(window))
 	{
-		t += 3e-3f;
+		double t = glfwGetTime();
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glfwPollEvents();
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);

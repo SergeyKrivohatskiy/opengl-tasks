@@ -1,0 +1,14 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertex_position_modelspace;
+
+out vec2 texture_pos;
+
+uniform mat4 view_proj_mat;
+
+void main()
+{
+    gl_Position = view_proj_mat * vec4(vertex_position_modelspace, 1.0);
+    texture_pos = vec2(0.0, 0.0);
+}
+
