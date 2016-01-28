@@ -159,10 +159,12 @@ int main()
 		GLfloat radius;
 	} point_light;
 	std::vector<point_light> point_lights;
-	point_lights.push_back({ vec3(0.0, 0.4, 0.0), vec3(1.0, 1.0, 0.0), 0.4f });
-	// Normalized normals
-	std::vector<vec3> directional_lights;
-
+	point_lights.push_back({ vec3(0.0, 0.3, 0.0), vec3(0.0, 1.0, 0.0), 0.3f });
+	point_lights.push_back({ vec3(0.4, 0, 0.0), vec3(1.0, 0.0, 1.0), 0.1f });
+	// Normalized normal
+	vec3 directional_light(1, 0, 0);
+	vec3 directional_light_color(1.00, 1.0, 0);
+	
 	mat4 proj = perspective(45.0f, float(1300) / float(800), 0.1f, 5.0f);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	while (!glfwWindowShouldClose(window))
@@ -204,6 +206,17 @@ int main()
 			glActiveTexture(GL_TEXTURE5);
 			glBindTexture(GL_TEXTURE_2D, position_texture);
 
+
+			glUniform3f(glGetUniformLocation(lights_shader, "directional_light"),
+				directional_light.x, directional_light.y, directional_light.z);
+			glUniform3f(glGetUniformLocation(lights_shader, "directional_light_color"),
+				directional_light_color.x, directional_light_color.y, directional_light_color.z);
+
+			for (point_light const &p_light : point_lights)
+			{
+				// TODO point lights
+			}
+
 			glBindVertexArray(vao);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
@@ -214,7 +227,6 @@ int main()
 				1, GL_FALSE, value_ptr(proj_view_mat));
 
 			glBindVertexArray(vao);
-			glBegin(GL_LINES);
 
 			for (point_light const &p_light : point_lights)
 			{
@@ -227,8 +239,6 @@ int main()
 				glBindVertexArray(cross_vao);
 				glDrawArrays(GL_LINES, 0, 6);
 			}
-
-			glEnd();
 		}
 
 

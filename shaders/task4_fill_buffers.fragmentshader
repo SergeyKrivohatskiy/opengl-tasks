@@ -9,7 +9,7 @@ in vec4 gl_FragCoord;
 
 void main()
 {
-    base_color = vec3(1.0);
+    base_color = vec3(0.2);
     normal = normal_;
     position = gl_FragCoord.xyz / gl_FragCoord.w;
 }
