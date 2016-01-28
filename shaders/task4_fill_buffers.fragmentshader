@@ -6,10 +6,11 @@ layout(location = 2) out vec3 position;
 
 in vec3 normal_;
 in vec4 gl_FragCoord;
+in vec3 modelspace_pos;
 
 void main()
 {
     base_color = vec3(0.2);
     normal = normal_;
-    position = gl_FragCoord.xyz / gl_FragCoord.w;
+    position = modelspace_pos;
 }

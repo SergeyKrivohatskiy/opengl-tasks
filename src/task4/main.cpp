@@ -155,12 +155,10 @@ int main()
 
 	typedef struct {
 		vec3 center;
-		vec3 colour;
+		vec3 color;
 		GLfloat radius;
 	} point_light;
-	std::vector<point_light> point_lights;
-	point_lights.push_back({ vec3(0.0, 0.3, 0.0), vec3(0.0, 1.0, 0.0), 0.3f });
-	point_lights.push_back({ vec3(0.4, 0, 0.0), vec3(1.0, 0.0, 1.0), 0.1f });
+	std::vector<point_light> point_lights(2);
 	// Normalized normal
 	vec3 directional_light(1, 0, 0);
 	vec3 directional_light_color(1.00, 1.0, 0);
@@ -170,9 +168,16 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		double t = glfwGetTime();
-		mat4 view(lookAt(vec3(sin(t), sin(t * 0.912) / 3 + 0.6, cos(t)) * 0.6f,
+		vec3 camepa_pos = vec3(sin(t * 0.3), sin(t * 0.912 * 0.3) / 3 + 0.6, cos(t * 0.3)) * 0.6f;
+		mat4 view(lookAt(camepa_pos,
 				vec3(0, 0, 0), vec3(0, 1, 0)));
 		mat4 proj_view_mat(proj * view);
+
+		point_lights[0] = { vec3(-0.2, 0.3, sin(t) * 0.2), 
+				vec3(0.0, sin(t * 2) * 0.5 + 0.5, 0.0), 0.55f };
+		point_lights[1] = { vec3(0.4, 0.2, cos(t * 0.3) * 0.2), 
+				vec3(0.0, 0.0, 0.5 + sin(t) * 0.5), 0.4f };
+
 		glfwPollEvents();
 		{
 			glEnable(GL_DEPTH_TEST);
@@ -212,10 +217,24 @@ int main()
 			glUniform3f(glGetUniformLocation(lights_shader, "directional_light_color"),
 				directional_light_color.x, directional_light_color.y, directional_light_color.z);
 
-			for (point_light const &p_light : point_lights)
+			glUniform3fv(glGetUniformLocation(lights_shader, "to_camera_modelspace"),
+				1, value_ptr(normalize(camepa_pos)));
+			for (size_t idx = 0; idx < point_lights.size(); ++idx)
 			{
-				// TODO point lights
+				point_light const &p_light = point_lights[idx];
+				std::string idx_str(std::to_string(idx));
+				glUniform3f(glGetUniformLocation(lights_shader,
+					("points_center[" + idx_str + "]").c_str()),
+					p_light.center.x, p_light.center.y, p_light.center.z);
+				glUniform3f(glGetUniformLocation(lights_shader,
+					("points_color[" + idx_str + "]").c_str()),
+					p_light.color.x, p_light.color.y, p_light.color.z);
+				glUniform1f(glGetUniformLocation(lights_shader,
+					("points_radius[" + idx_str + "]").c_str()),
+					p_light.radius);
 			}
+			glUniform1i(glGetUniformLocation(lights_shader,"lights_count"),
+				point_lights.size());
 
 			glBindVertexArray(vao);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -233,7 +252,7 @@ int main()
 				glUniform3f(glGetUniformLocation(draw_lines_shader, "center"),
 					p_light.center.x, p_light.center.y, p_light.center.z);
 				glUniform3f(glGetUniformLocation(draw_lines_shader, "color"),
-					p_light.colour.x, p_light.colour.y, p_light.colour.z);
+					p_light.color.x, p_light.color.y, p_light.color.z);
 				glUniform1f(glGetUniformLocation(draw_lines_shader, "radius"),
 					p_light.radius);
 				glBindVertexArray(cross_vao);
