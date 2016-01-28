@@ -1,0 +1,15 @@
+#version 330 core
+
+layout(location = 0) out vec3 base_color;
+layout(location = 1) out vec3 normal;
+layout(location = 2) out vec3 position;
+
+in vec3 normal_;
+in vec4 gl_FragCoord;
+
+void main()
+{
+    base_color = vec3(1.0);
+    normal = normal_;
+    position = gl_FragCoord.xyz / gl_FragCoord.w;
+}

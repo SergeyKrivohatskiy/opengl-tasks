@@ -9,3 +9,5 @@ GLFWwindow* init();
 
 // returns vertex array and normals array
 std::pair<std::vector<GLfloat>, std::vector<GLfloat>> load_scene(std::string filename);
+
+GLuint create_texture(GLint internal_format, GLenum format, GLenum type);

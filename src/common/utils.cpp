@@ -103,3 +103,16 @@ std::pair<std::vector<GLfloat>, std::vector<GLfloat>> load_scene(std::string fil
 
 	return { vertexes, normals };
 }
+
+GLuint create_texture(GLint internal_format, GLenum format, GLenum type)
+{
+	GLuint texture_id;
+	glGenTextures(1, &texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, 1300, 800, 0, format, type, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	return texture_id;
+}

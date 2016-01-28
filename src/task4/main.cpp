@@ -20,98 +20,7 @@
 #include "../common/shader.hpp"
 #include "../common/utils.h"
 
-static GLfloat const skybox_v[] = {
-	-1.0f, 1.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, 1.0f, -1.0f,
-	-1.0f, 1.0f, -1.0f,
-
-	-1.0f, -1.0f, 1.0f,
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, 1.0f, -1.0f,
-	-1.0f, 1.0f, -1.0f,
-	-1.0f, 1.0f, 1.0f,
-	-1.0f, -1.0f, 1.0f,
-
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-
-	-1.0f, -1.0f, 1.0f,
-	-1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, -1.0f, 1.0f,
-	-1.0f, -1.0f, 1.0f,
-
-	-1.0f, 1.0f, -1.0f,
-	1.0f, 1.0f, -1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f, -1.0f,
-
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f, 1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f, 1.0f,
-	1.0f, -1.0f, 1.0f
-};
-
 using namespace glm;
-
-void load_texture(GLint idx, gli::texture const &texture)
-{
-	glTexImage2D(idx, 0, GL_RGB,
-		texture.dimensions().x,
-		texture.dimensions().y,
-		0, GL_RGB, GL_UNSIGNED_BYTE, texture.data(0, 0, 0));
-}
-
-GLuint load_cubemap(std::string const &name_prefix)
-{
-	GLuint texture_id;
-	glGenTextures(1, &texture_id);
-	glActiveTexture(GL_TEXTURE0);
-
-	int width, height;
-	unsigned char* image;
-
-	glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
-	gli::texture texture_p_x = gli::load(name_prefix + "+x.dds");
-	assert(!texture_p_x.empty());
-	gli::texture texture_p_y = gli::load(name_prefix + "+y.dds");
-	assert(!texture_p_y.empty());
-	gli::texture texture_p_z = gli::load(name_prefix + "+z.dds");
-	assert(!texture_p_z.empty());
-	gli::texture texture_m_x = gli::load(name_prefix + "-x.dds");
-	assert(!texture_m_x.empty());
-	gli::texture texture_m_y = gli::load(name_prefix + "-y.dds");
-	assert(!texture_m_y.empty());
-	gli::texture texture_m_z = gli::load(name_prefix + "-z.dds");
-	assert(!texture_m_z.empty());
-	load_texture(GL_TEXTURE_CUBE_MAP_POSITIVE_X, texture_p_x);
-	load_texture(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, texture_p_y);
-	load_texture(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, texture_p_z);
-	load_texture(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, texture_m_x);
-	load_texture(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, texture_m_y);
-	load_texture(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, texture_m_z);
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
-	return texture_id;
-}
 
 
 int main() 
@@ -122,77 +31,206 @@ int main()
 		return -1;
 	}
 
-	GLuint skybox_shader = LoadShaders("task2_skybox.vertexshader", "task2_skybox.fragmentshader");
-	GLuint scene_shader = LoadShaders("task2_scene.vertexshader", "task2_scene.fragmentshader");
+	GLuint fill_buffers_shader = LoadShaders("task4_fill_buffers.vertexshader", "task4_fill_buffers.fragmentshader");
+	GLuint lights_shader = LoadShaders("task4_lights.vertexshader", "task4_lights.fragmentshader");
+	// Used to draw point light positions
+	GLuint draw_lines_shader = LoadShaders("task4_lines.vertexshader", "task4_lines.fragmentshader");
 
-	GLuint skybox_vao, skybox_vbo;
-	glGenVertexArrays(1, &skybox_vao);
-	glGenBuffers(1, &skybox_vbo);
-	glBindVertexArray(skybox_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, skybox_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skybox_v), &skybox_v, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-	glBindVertexArray(0);
+	GLuint framebuffer;
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-	GLuint skybox_texture = load_cubemap("SantaMariaDeiMiracoli");
-	if (!skybox_texture)
-	{
-		return -5;
-	}
+	GLuint framebuffer_depth;
+	glGenRenderbuffers(1, &framebuffer_depth);
+	glBindRenderbuffer(GL_RENDERBUFFER, framebuffer_depth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1300, 800);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, framebuffer_depth);
 
-	std::pair<std::vector<GLfloat>, std::vector<GLfloat>> vert_and_normals = 
-			load_scene("spider.obj");
+	GLuint base_color_texture = create_texture(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, base_color_texture, 0);
+
+	GLuint normals_texture = create_texture(GL_RGB32F, GL_RGB, GL_FLOAT);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, normals_texture, 0);
+
+	GLuint position_texture = create_texture(GL_RGB32F, GL_RGB, GL_FLOAT);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, position_texture, 0);
+
+	GLuint attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	std::pair<std::vector<GLfloat>, std::vector<GLfloat>> vert_and_normals =
+		load_scene("spider.obj");
 
 	std::vector<GLfloat> &vertexes = vert_and_normals.first;
 	std::vector<GLfloat> &normals = vert_and_normals.second;
 	GLuint vertex_buffer, vertex_array_o;
-	glGenVertexArrays(1, &vertex_array_o);
-	glGenBuffers(1, &vertex_buffer);
-	glBindVertexArray(vertex_array_o);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, vertexes.size() * sizeof(GLfloat), vertexes.data(), GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-	GLuint norm_buffer;
-	glGenBuffers(1, &norm_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, norm_buffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, norm_buffer);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-	glBindVertexArray(0);
+	{
+		glGenVertexArrays(1, &vertex_array_o);
+		glGenBuffers(1, &vertex_buffer);
+		glBindVertexArray(vertex_array_o);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glBufferData(GL_ARRAY_BUFFER, vertexes.size() * sizeof(GLfloat), vertexes.data(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+		GLuint norm_buffer;
+		glGenBuffers(1, &norm_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, norm_buffer);
+		glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, norm_buffer);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+		glBindVertexArray(0);
+	}
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	float t = 0;
+	GLuint vao;
+	{
+		static const GLfloat g_vertex_buffer_data[] =
+		{
+			-1.0f, -1.0f, 0.0f,
+			1.0f, -1.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
+			-1.0f, 1.0f, 0.0f,
+			-1.0f, -1.0f, 0.0f
+		};
+		static const GLfloat g_uv_buffer_data[] =
+		{
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+			0.0f, 0.0f
+		};
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		GLuint vertexbuffer;
+		glGenBuffers(1, &vertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+		GLuint uvbuffer;
+		glGenBuffers(1, &uvbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+		// 2nd attribute buffer : uv's
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+		glBindVertexArray(0);
+	}
+
+	GLuint cross_vao;
+	{
+		static const GLfloat g_vertex_buffer_data[] =
+		{
+			-1.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			0.0f, -1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, -1.0f,
+			0.0f, 0.0f, 1.0f,
+		};
+		glGenVertexArrays(1, &cross_vao);
+		glBindVertexArray(cross_vao);
+
+		GLuint vertexbuffer;
+		glGenBuffers(1, &vertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+		
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+	}
+
+	typedef struct {
+		vec3 center;
+		vec3 colour;
+		GLfloat radius;
+	} point_light;
+	std::vector<point_light> point_lights;
+	point_lights.push_back({ vec3(0.0, 0.4, 0.0), vec3(1.0, 1.0, 0.0), 0.4f });
+	// Normalized normals
+	std::vector<vec3> directional_lights;
+
+	mat4 proj = perspective(45.0f, float(1300) / float(800), 0.1f, 5.0f);
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	while (!glfwWindowShouldClose(window))
 	{
-		t += 3e-3;
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		double t = glfwGetTime();
+		mat4 view(lookAt(vec3(sin(t), sin(t * 0.912) / 3 + 0.6, cos(t)) * 0.6f,
+				vec3(0, 0, 0), vec3(0, 1, 0)));
+		mat4 proj_view_mat(proj * view);
 		glfwPollEvents();
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		{
+			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LESS);
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glUseProgram(fill_buffers_shader);
+			glUniform1i(glGetUniformLocation(fill_buffers_shader, "base_color"), 0);
+			glUniform1i(glGetUniformLocation(fill_buffers_shader, "normal"), 1);
+			glUniform1i(glGetUniformLocation(fill_buffers_shader, "position"), 2);
+			glUniformMatrix4fv(glGetUniformLocation(fill_buffers_shader, "proj_view_mat"),
+				1, GL_FALSE, value_ptr(proj_view_mat));
+			glBindVertexArray(vertex_array_o);
+			glDrawArrays(GL_TRIANGLES, 0, vertexes.size() / 3);
 
-		mat4 proj = glm::perspective(45.0f,
-			float(1300) / float(800), 0.1f, 100.0f);
-		mat4 view(lookAt(vec3(sin(t), sin(t * 0.912), cos(t)) * 0.6f, vec3(0, 0, 0), vec3(0, 1, 0)));
-		glUseProgram(scene_shader);
-		glUniformMatrix4fv(glGetUniformLocation(scene_shader, "view_proj_mat"),
-			1, GL_FALSE, value_ptr(proj * view));
-		glBindVertexArray(vertex_array_o);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glUseProgram(lights_shader);
 
-		glDrawArrays(GL_TRIANGLES, 0, vertexes.size() / 3);
+			glUniform1i(glGetUniformLocation(lights_shader, "base_color"), 3);
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, base_color_texture);
 
-		glUseProgram(skybox_shader);
-		glUniformMatrix4fv(glGetUniformLocation(skybox_shader, "view_proj_mat"),
-			1, GL_FALSE, value_ptr(proj * view));
-		glBindVertexArray(skybox_vao);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
+			glUniform1i(glGetUniformLocation(lights_shader, "normal"), 4);
+			glActiveTexture(GL_TEXTURE4);
+			glBindTexture(GL_TEXTURE_2D, normals_texture);
+
+			glUniform1i(glGetUniformLocation(lights_shader, "position"), 5);
+			glActiveTexture(GL_TEXTURE5);
+			glBindTexture(GL_TEXTURE_2D, position_texture);
+
+			glBindVertexArray(vao);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+		{
+			glDisable(GL_DEPTH_TEST); // to draw all point ligths
+			glUseProgram(draw_lines_shader);
+			glUniformMatrix4fv(glGetUniformLocation(draw_lines_shader, "view_proj_mat"),
+				1, GL_FALSE, value_ptr(proj_view_mat));
+
+			glBindVertexArray(vao);
+			glBegin(GL_LINES);
+
+			for (point_light const &p_light : point_lights)
+			{
+				glUniform3f(glGetUniformLocation(draw_lines_shader, "center"),
+					p_light.center.x, p_light.center.y, p_light.center.z);
+				glUniform3f(glGetUniformLocation(draw_lines_shader, "color"),
+					p_light.colour.x, p_light.colour.y, p_light.colour.z);
+				glUniform1f(glGetUniformLocation(draw_lines_shader, "radius"),
+					p_light.radius);
+				glBindVertexArray(cross_vao);
+				glDrawArrays(GL_LINES, 0, 6);
+			}
+
+			glEnd();
+		}
+
 
 		glfwSwapBuffers(window);
 	}

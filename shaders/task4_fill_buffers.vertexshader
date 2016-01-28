@@ -1,0 +1,14 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertex_position_model_space;
+layout(location = 1) in vec3 vertex_normal;
+
+out vec3 normal_;
+uniform mat4 proj_view_mat;
+
+void main()
+{
+    gl_Position = proj_view_mat * vec4(vertex_position_model_space, 1.0);
+    normal_ = vertex_normal;
+}
+

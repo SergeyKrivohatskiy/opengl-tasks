@@ -1,0 +1,13 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertex_position_window_space;
+
+uniform mat4 view_proj_mat;
+uniform vec3 center;
+uniform float radius;
+
+void main()
+{
+    gl_Position = view_proj_mat * vec4((radius * vertex_position_window_space) + center, 1.0);
+}
+
