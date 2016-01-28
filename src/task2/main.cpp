@@ -173,10 +173,13 @@ int main()
 
 		mat4 proj = glm::perspective(45.0f,
 			float(1300) / float(800), 0.1f, 100.0f);
-		mat4 view(lookAt(vec3(sin(t), sin(t * 0.912), cos(t)) * 0.6f, vec3(0, 0, 0), vec3(0, 1, 0)));
+		vec3 camera_pos(vec3(sin(t * 0.2), sin(t * 0.912 * 0.2), cos(t * 0.2)) * 0.6f);
+		mat4 view(lookAt(camera_pos, vec3(0, 0, 0), vec3(0, 1, 0)));
 		glUseProgram(scene_shader);
 		glUniformMatrix4fv(glGetUniformLocation(scene_shader, "view_proj_mat"),
 			1, GL_FALSE, value_ptr(proj * view));
+		glUniform3fv(glGetUniformLocation(scene_shader, "from_camera_modelspace"),
+			1, value_ptr(normalize(-camera_pos)));
 		glBindVertexArray(vertex_array_o);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
 

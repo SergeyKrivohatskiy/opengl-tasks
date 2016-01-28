@@ -3,7 +3,7 @@
 layout(location = 0) in vec3 vertex_position_modelspace;
 layout(location = 1) in vec3 vertex_normal;
 
-out vec3 texture_position;
+out vec3 normal;
 
 uniform mat4 view_proj_mat;
 
@@ -12,6 +12,6 @@ void main()
 
     vec4 tmp = view_proj_mat * vec4(vertex_position_modelspace, 1.0);
     gl_Position = tmp.xyzw;
-    texture_position = vertex_normal;
+    normal = vertex_normal;
 }
 

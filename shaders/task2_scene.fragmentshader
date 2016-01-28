@@ -1,12 +1,14 @@
 #version 330 core
 
-in vec3 texture_position;
+in vec3 normal;
 
 out vec4 color;
 
 uniform samplerCube skybox_texture;
+uniform vec3 from_camera_modelspace;
 
 void main()
 {
+    vec3 texture_position = reflect(from_camera_modelspace, normalize(normal));
 	color = texture(skybox_texture, texture_position).bgra;
 }
